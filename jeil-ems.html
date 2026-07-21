@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>JEIL-EMS · 제주제일고 야간자율학습실 응급의료 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08090B;--bg-elev:#101318;--bg-card:#14171D;--line:#242932;
+    --red:#FF2A3A;--red-deep:#C00713;--red-glow:rgba(255,42,58,.55);
+    --amber:#FFC24B;--green:#33E08A;--gold:#FE9C2B;--navy:#006C97;
+    --text:#F3F5F7;--muted:#868D97;
+    --font:"Pretendard Variable",Pretendard,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+    background-image:radial-gradient(1000px 500px at 82% -12%,rgba(255,42,58,.10),transparent 60%),radial-gradient(800px 420px at 0% 112%,rgba(255,42,58,.06),transparent 55%)}
+  button,a{-webkit-tap-highlight-color:transparent}
+  .mono{font-family:var(--mono)}
+
+  /* ---------- header ---------- */
+  header{position:sticky;top:0;z-index:40;background:rgba(8,9,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .topline{height:3px;background:linear-gradient(90deg,var(--red-deep),var(--red),var(--red-deep));background-size:200% 100%;animation:slide 3s linear infinite;box-shadow:0 0 14px var(--red-glow)}
+  @keyframes slide{to{background-position:-200% 0}}
+  .bar{max-width:1080px;margin:0 auto;padding:11px max(22px,env(safe-area-inset-right)) 11px max(22px,env(safe-area-inset-left));display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0}
+  .brand .crest{height:38px;width:auto;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+  .brand b{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.05em;display:flex;align-items:center;gap:8px}
+  .brand b::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 9px var(--red-glow);animation:beat 1.1s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}20%{transform:scale(1.5)}40%{transform:scale(1)}}
+  .brand span{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status{display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-family:var(--mono);white-space:nowrap;text-align:right}
+  .status .date{font-size:11px;color:var(--muted);letter-spacing:.04em}
+  .status .time{font-size:16px;font-weight:700;color:var(--text);letter-spacing:.03em;font-variant-numeric:tabular-nums}
+  @media(max-width:560px){.brand span{font-size:10px}.status .time{font-size:15px}.status .date{font-size:10px}}
+  @media(max-width:360px){.brand .crest{height:34px}.status .time{font-size:14px}}
+
+  .ecg{height:46px;overflow:hidden;background:var(--bg);border-top:1px solid #000;position:relative}
+  .ecg .trace{display:flex;width:max-content;animation:run 2.2s linear infinite}
+  @keyframes run{to{transform:translateX(-240px)}}
+  .ecg path{fill:none;stroke:var(--red);stroke-width:2;filter:drop-shadow(0 0 5px var(--red-glow))}
+  .ecg::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,var(--bg),transparent 8%,transparent 92%,var(--bg))}
+
+  /* ---------- layout ---------- */
+  main{max-width:1080px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-right)) calc(70px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left))}
+  .screen{display:none;animation:fade .35s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .eyebrow{font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px}
+  h1{font-size:clamp(22px,4vw,32px);line-height:1.12;font-weight:800;letter-spacing:-.02em}
+
+  .back{display:none;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--bg-elev);border:1px solid var(--line);padding:8px 14px;border-radius:8px;cursor:pointer;margin-bottom:18px;transition:.2s}
+  .screen:not(#home) .back{display:inline-flex}
+  .back:hover{color:var(--text);border-color:var(--red);box-shadow:0 0 0 1px var(--red-deep)}
+
+  /* ---------- home (compact) ---------- */
+  .hero{position:relative;padding:6px 0 18px;overflow:hidden}
+  .hero-crest{position:absolute;right:-18px;top:-26px;height:150px;opacity:.06;pointer-events:none;filter:grayscale(.2)}
+  .hero .eyebrow{margin-bottom:6px}
+  .hero h1{max-width:16ch}
+  .hero p.lead{color:var(--muted);font-size:14px;margin-top:9px;max-width:56ch}
+  .menu-label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin:4px 0 12px;display:flex;align-items:center;gap:10px}
+  .menu-label::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(min-width:720px){.cards{grid-template-columns:repeat(3,1fr)}}
+  .card{position:relative;text-align:left;background:var(--bg-card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;cursor:pointer;overflow:hidden;color:var(--text);transition:.2s;isolation:isolate;display:flex;flex-direction:column;gap:2px}
+  .card::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(120% 100% at 100% 0,rgba(255,42,58,.16),transparent 55%);opacity:0;transition:.25s}
+  .card:hover{transform:translateY(-3px);border-color:var(--red);box-shadow:0 12px 26px -14px rgba(0,0,0,.75),0 0 0 1px var(--red-deep)}
+  .card:hover::before{opacity:1}
+  .card:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+  .card .row{display:flex;align-items:center;justify-content:space-between}
+  .card .no{font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:.1em}
+  .card .ci{width:30px;height:30px;color:var(--red)}
+  .card h3{font-size:16px;font-weight:700;letter-spacing:-.01em;margin-top:8px}
+  .card p{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.4}
+  .card.alarm{background:linear-gradient(180deg,rgba(255,42,58,.14),var(--bg-card));border-color:var(--red-deep)}
+
+  /* ---------- content ---------- */
+  .page-title{margin-bottom:22px}
+  .panel{background:var(--bg-elev);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:16px}
+  .panel h2{font-size:17px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .panel h2::before{content:"";width:4px;height:17px;background:var(--red);border-radius:2px;box-shadow:0 0 8px var(--red-glow)}
+
+  /* supplies grid with illustration */
+  .sups{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+  .sup{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--bg-card);border:1px solid var(--line);border-radius:12px;padding:16px 10px;text-align:center;transition:.2s}
+  .sup:hover{border-color:var(--red);transform:translateY(-2px)}
+  .sup svg{width:44px;height:44px;color:#E7E9EC}
+  .sup span{font-size:13.5px;font-weight:600}
+
+  /* numbered steps with mini illustration */
+  ol.steps{list-style:none;counter-reset:s}
+  ol.steps>li{counter-increment:s;position:relative;padding:14px 0 14px 56px;border-bottom:1px solid var(--line);min-height:52px}
+  ol.steps>li:last-child{border-bottom:0}
+  ol.steps>li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:12px;font-family:var(--mono);font-weight:700;font-size:14px;color:var(--red);width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--red-deep);border-radius:9px;background:rgba(255,42,58,.07)}
+  ol.steps b{font-weight:700}
+  ol.steps small{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+
+  .note{display:flex;gap:12px;padding:14px 16px;border-radius:11px;font-size:13.5px;margin-top:6px}
+  .note.warn{background:rgba(255,194,75,.08);border:1px solid rgba(255,194,75,.35);color:#ffdd9a}
+  .note.danger{background:rgba(255,42,58,.09);border:1px solid var(--red-deep);color:#ffb3ba}
+  .note .b{flex:none;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.05em;padding-top:1px}
+
+  /* symptom */
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+  .chip{font-family:var(--mono);font-size:13px;padding:9px 15px;border-radius:999px;border:1px solid var(--line);background:var(--bg-elev);color:var(--muted);cursor:pointer;transition:.2s}
+  .chip:hover{color:var(--text);border-color:var(--muted)}
+  .chip.on{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 16px var(--red-glow)}
+  .symptom{display:none}
+  .symptom.active{display:block;animation:fade .3s ease}
+  .sym-head{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+  .sym-fig{flex:none;width:76px;height:76px;color:#E7E9EC;background:var(--bg-card);border:1px solid var(--line);border-radius:14px;padding:6px}
+  .sym-head h2{font-size:22px;font-weight:800}
+  .sym-head .en{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;display:block;margin-top:2px}
+
+  /* contacts */
+  .contacts{display:grid;gap:12px}
+  .contact{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:12px;padding:15px 20px;transition:.2s}
+  .contact:hover{border-color:var(--red);transform:translateX(3px)}
+  .contact .info b{font-size:15px}
+  .contact .info span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+  .contact a{font-family:var(--mono);font-weight:700;font-size:17px;color:var(--red);text-decoration:none;white-space:nowrap}
+  .contact.prime{background:linear-gradient(90deg,rgba(255,42,58,.16),var(--bg-card));border-color:var(--red-deep)}
+  .contact.prime a{font-size:23px}
+
+  /* aed */
+  .aed{display:grid;gap:14px}
+  .aed .loc{display:flex;gap:16px;align-items:center;background:var(--bg-card);border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+  .aed .pin{flex:none;width:52px;height:52px;color:var(--green)}
+  .aed .loc b{font-size:16px}
+  .aed .loc p{color:var(--muted);font-size:13px;margin-top:3px}
+
+  /* metronome */
+  .metro{background:linear-gradient(180deg,rgba(255,42,58,.1),var(--bg-elev));border:1px solid var(--red-deep);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px}
+  .metro .bpm{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--red);letter-spacing:.15em;text-transform:uppercase}
+  .pulse{width:116px;height:116px;margin:18px auto;border-radius:50%;border:2px solid var(--red-deep);display:grid;place-items:center;position:relative}
+  .pulse .core{width:66px;height:66px;border-radius:50%;background:var(--red);box-shadow:0 0 24px var(--red-glow);transition:transform .06s}
+  .pulse.hit .core{transform:scale(1.28)}
+  .pulse .ring{position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--red);opacity:0}
+  .pulse.hit .ring{animation:ring .5s ease-out}
+  @keyframes ring{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(1.5)}}
+  .metro .cnt{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:14px}
+  .metro button{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.05em;color:#fff;background:var(--red);border:none;padding:13px 34px;border-radius:10px;cursor:pointer;transition:.2s;box-shadow:0 0 18px var(--red-glow)}
+  .metro button:hover{background:var(--red-deep)}
+  .metro button.stop{background:var(--bg-card);color:var(--text);border:1px solid var(--line);box-shadow:none}
+
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap}
+  .btnrow a{cursor:pointer;font-family:var(--mono);font-weight:700;font-size:14px;padding:12px 22px;border-radius:10px;text-decoration:none}
+  .btnrow .primary{color:#fff;background:var(--red);box-shadow:0 0 18px var(--red-glow)}
+  .btnrow .ghost{color:var(--text);background:var(--bg-card);border:1px solid var(--line)}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);margin-top:34px;padding:28px 22px 40px;text-align:center}
+  .foot-disc{max-width:600px;margin:0 auto 20px;color:#9aa0a9;font-size:13px}
+  .credit{display:inline-flex;align-items:center;gap:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:14px;padding:14px 20px;text-align:left;max-width:100%}
+  .credit .crest{height:44px;width:auto;flex:none}
+  .credit .txt b{font-size:13.5px;color:var(--text);letter-spacing:.01em}
+  .credit .txt .team{font-family:var(--mono);font-size:12px;color:var(--red);margin-top:4px;letter-spacing:.03em}
+  .credit .txt .members{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .sys{margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
+
+  /* ---------- mobile optimization ---------- */
+  @media(max-width:640px){
+    main{padding-top:16px}
+    .hero{padding-top:2px}
+    .hero h1{font-size:25px;max-width:100%}
+    .hero p.lead{font-size:13.5px}
+    .hero-crest{height:118px;right:-14px;top:-14px;opacity:.05}
+
+    /* menu cards: comfortable tap targets */
+    .cards{gap:10px}
+    .card{padding:15px 14px 13px;min-height:112px;border-radius:13px}
+    .card:active{transform:scale(.97);border-color:var(--red)}
+    .card h3{font-size:15.5px;margin-top:6px}
+    .card p{font-size:11.5px}
+    .card .ci{width:27px;height:27px}
+
+    /* symptom chips become a swipeable single row */
+    .chips{flex-wrap:nowrap;overflow-x:auto;gap:8px;margin:0 -16px 18px;padding:0 16px 4px;
+      scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .chips::-webkit-scrollbar{display:none}
+    .chip{flex:none;scroll-snap-align:start;min-height:42px;display:flex;align-items:center;padding:0 16px;font-size:13.5px}
+
+    .panel{padding:18px 15px}
+    .panel h2{font-size:16px}
+    ol.steps>li{padding-left:48px}
+    ol.steps>li::before{width:34px;height:34px}
+    ol.steps small{font-size:12.5px}
+
+    .sups{grid-template-columns:repeat(3,1fr);gap:9px}
+    .sup{padding:13px 6px}
+    .sup svg{width:40px;height:40px}
+    .sup span{font-size:12.5px}
+
+    .sym-head{gap:13px}
+    .sym-fig{width:66px;height:66px}
+    .sym-head h2{font-size:19px}
+
+    /* contacts: stack so the number never gets cramped */
+    .contact{flex-direction:column;align-items:flex-start;gap:10px;padding:15px 17px}
+    .contact a{font-size:22px;align-self:stretch;text-align:center;background:rgba(255,42,58,.09);
+      border:1px solid var(--red-deep);border-radius:10px;padding:11px 0}
+    .contact.prime a{font-size:30px}
+
+    .aed .loc{padding:14px 16px;gap:13px}
+    .aed .pin{width:46px;height:46px}
+
+    .metro{padding:22px 18px}
+    .metro button{width:100%;padding:15px 0;font-size:16px}
+
+    /* action buttons go full-width & thumb-friendly */
+    .btnrow{flex-direction:column}
+    .btnrow a{text-align:center;padding:15px 0;font-size:15px}
+
+    .back{padding:10px 16px;min-height:42px}
+    footer{padding:26px 18px calc(34px + env(safe-area-inset-bottom))}
+    .credit{flex-direction:column;text-align:center;gap:10px;width:100%;padding:18px}
+  }
+
+  @media(max-width:360px){
+    .hero h1{font-size:23px}
+    .card{padding:13px 12px;min-height:104px}
+    .card h3{font-size:14.5px}
+    .sups{grid-template-columns:repeat(2,1fr)}
+  }
+
+  /* respect users who prefer less motion (also easier on the battery) */
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+    .ecg .trace{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topline"></div>
+  <div class="bar">
+    <div class="brand">
+      <img class="crest" alt="제주제일고등학교 교표">
+      <div>
+        <b>JEIL-EMS</b>
+        <span>제주제일고 · 야간자율학습실 응급의료 시스템</span>
+      </div>
+    </div>
+    <div class="status">
+      <span class="date" id="date">----.--.--</span>
+      <span class="time" id="clock">--:--:--</span>
+    </div>
+  </div>
+  <div class="ecg" aria-hidden="true"><div class="trace" id="trace"></div></div>
+</header>
+
+<main>
+
+  <!-- ============ HOME ============ -->
+  <section id="home" class="screen active">
+    <div class="hero">
+      <img class="crest hero-crest" alt="">
+      <p class="eyebrow">Emergency Medical Service · 제71기</p>
+      <h1>야간자율학습실 응급의료 시스템</h1>
+      <p class="lead">보건교사가 없고 인근 병원이 문을 닫는 야간, 누구나 바로 따라 할 수 있게 정리했습니다.</p>
+    </div>
+
+    <p class="menu-label">Menu · 항목을 선택하세요</p>
+    <div class="cards">
+      <button class="card" onclick="go('contents')">
+        <div class="row"><span class="no">01</span>
+          <svg class="ci" viewBox="0 0 40 40" fill="none"><rect x="7" y="14" width="26" height="20" rx="3" stroke="currentColor" stroke-width="2.4"/><path d="M15 14v-3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3" stroke="currentColor" stroke-width="2.4"/><path d="M20 20v8M16 24h8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </div>
+        <h3>구급함 내용물</h3><p>무엇이 들어 있는지 확인</p>
+      </button>
+
+      <button class="card" onclick="go('usage')">
+        <div class="row"><span class="no">02</span>
+          <svg class="ci" viewBox="0 0 40 40" fill="none"><rect x="10" y="7" width="20" height="26" rx="3" stroke="currentColor" stroke-width="2.4"/><path d="M15 14h10M15 19h10M15 24h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </div>
+        <h3>사용 방법</h3><p>개봉부터 기록까지</p>
+      </button>
+
+      <button class="card" onclick="go('firstaid')">
+        <div class="row"><span class="no">03</span>
+          <svg class="ci" viewBox="0 0 40 40" fill="none"><rect x="8" y="12" width="24" height="16" rx="8" stroke="currentColor" stroke-width="2.4"/><path d="M20 17v6M17 20h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </div>
+        <h3>증상별 응급처치</h3><p>코피·두통·어지럼·베임</p>
+      </button>
+
+      <button class="card alarm" onclick="go('cpr')">
+        <div class="row"><span class="no">04</span>
+          <svg class="ci" viewBox="0 0 40 40" fill="none"><path d="M20 32C10 25 6 19 6 14a6 6 0 0 1 11-3 6 6 0 0 1 11 3c0 5-4 11-14 18Z" fill="var(--red)" fill-opacity=".18" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 19h5l2-4 3 8 2-4h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>심폐소생술 (CPR)</h3><p>심정지 + 압박 메트로놈</p>
+      </button>
+
+      <button class="card" onclick="go('aed')">
+        <div class="row"><span class="no">05</span>
+          <svg class="ci" viewBox="0 0 40 40" fill="none"><rect x="9" y="9" width="22" height="22" rx="4" stroke="currentColor" stroke-width="2.4"/><path d="M21 14l-5 8h4l-1 6 6-9h-4z" fill="currentColor"/></svg>
+        </div>
+        <h3>자동심장충격기 위치</h3><p>교내 AED 비치 장소</p>
+      </button>
+
+      <button class="card" onclick="go('contacts')">
+        <div class="row"><span class="no">06</span>
+          <svg class="ci" viewBox="0 0 40 40" fill="none"><path d="M13 8c-3 0-5 2-5 5 0 10 9 19 19 19 3 0 5-2 5-5v-3l-6-2-3 3c-3-1.6-5.4-4-7-7l3-3-2-6z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>비상 연락망</h3><p>119 · 응급의료센터</p>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ 내용물 ============ -->
+  <section id="contents" class="screen">
+    <button class="back" onclick="go('home')">← 메뉴로</button>
+    <div class="page-title"><p class="eyebrow">01 · Kit Inventory</p><h1>구급함 내용물</h1></div>
+    <div class="panel">
+      <h2>기본 처치 용품</h2>
+      <div class="sups">
+        <div class="sup">
+          <svg viewBox="0 0 48 48" fill="none"><rect x="9" y="9" width="30" height="30" rx="4" fill="#fff" fill-opacity=".06" stroke="currentColor" stroke-width="2.2"/><path d="M17 9v30M24 9v30M31 9v30M9 17h30M9 24h30M9 31h30" stroke="currentColor" stroke-width="1" opacity=".45"/></svg>
+          <span>거즈</span>
+        </div>
+        <div class="sup">
+          <svg viewBox="0 0 48 48" fill="none"><rect x="17" y="15" width="14" height="24" rx="5" fill="#fff" fill-opacity=".06" stroke="currentColor" stroke-width="2.2"/><rect x="20" y="8" width="8" height="8" rx="2" fill="var(--red)"/><path d="M21 24h6M21 29h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>연고</span>
+        </div>
+        <div class="sup">
+          <svg viewBox="0 0 48 48" fill="none"><line x1="14" y1="34" x2="34" y2="14" stroke="currentColor" stroke-width="2.4"/><circle cx="12.5" cy="35.5" r="5" fill="#fff"/><circle cx="35.5" cy="12.5" r="5" fill="#fff"/></svg>
+          <span>면봉</span>
+        </div>
+        <div class="sup">
+          <svg viewBox="0 0 48 48"><g fill="#fff" fill-opacity=".9"><circle cx="24" cy="27" r="9"/><circle cx="16" cy="23" r="6"/><circle cx="32" cy="23" r="6"/><circle cx="20" cy="18" r="5.5"/><circle cx="28" cy="18" r="5.5"/></g></svg>
+          <span>코튼볼</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>개인 보호 장구</h2>
+      <div class="sups">
+        <div class="sup">
+          <svg viewBox="0 0 48 48"><g fill="var(--red)" fill-opacity=".14" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="15" y="20" width="18" height="20" rx="5"/><rect x="16.5" y="9" width="3.6" height="13" rx="1.8"/><rect x="21.2" y="7" width="3.6" height="15" rx="1.8"/><rect x="25.9" y="8" width="3.6" height="14" rx="1.8"/><rect x="30.6" y="12" width="3.6" height="10" rx="1.8"/><path d="M15 26c-3 0-5 1.5-5 4s2 4 5 4" fill="none"/></g></svg>
+          <span>장갑</span>
+        </div>
+        <div class="sup">
+          <svg viewBox="0 0 48 48" fill="none"><rect x="10" y="12" width="28" height="24" rx="3" fill="#fff" fill-opacity=".06" stroke="currentColor" stroke-width="2.2"/><path d="M10 18h28" stroke="currentColor" stroke-width="1.4" opacity=".5"/><path d="M24 22v10M19 27h10" stroke="var(--red)" stroke-width="2.6" stroke-linecap="round"/></svg>
+          <span>소독티슈</span>
+        </div>
+        <div class="sup">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M14 16c0-1 .7-1.6 1.6-1.5h16.8c.9-.1 1.6.5 1.6 1.5v10c0 5-4.5 9-10 9s-10-4-10-9Z" fill="#fff" fill-opacity=".06" stroke="currentColor" stroke-width="2.2"/><path d="M14 20l-4-3M14 27l-4 3M34 20l4-3M34 27l4 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 22h14M17 26h14" stroke="currentColor" stroke-width="1.4" opacity=".55"/></svg>
+          <span>마스크</span>
+        </div>
+        <div class="sup">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M16 18h16l2 20a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2Z" fill="#fff" fill-opacity=".06" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M19 18v-2a5 5 0 0 1 10 0v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <span>비닐백</span>
+        </div>
+      </div>
+      <div class="note warn" style="margin-top:16px"><span class="b">TIP</span><span>처치 전에는 반드시 <b>장갑을 착용</b>하고, 사용한 거즈·장갑은 <b>비닐백에 담아</b> 폐기하세요.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 사용 방법 ============ -->
+  <section id="usage" class="screen">
+    <button class="back" onclick="go('home')">← 메뉴로</button>
+    <div class="page-title"><p class="eyebrow">02 · Operating Procedure</p><h1>구급함 사용 방법</h1></div>
+    <div class="panel">
+      <ol class="steps">
+        <li><b>보안 씰 제거</b><small>구급함 겉면의 보안 씰을 제거해 개봉합니다.</small></li>
+        <li><b>응급처치 방법 확인</b><small>증상별 처치법을 확인한 뒤, 상황에 맞는 처치를 준비합니다.</small></li>
+        <li><b>처치 시행</b><small>장갑을 착용하고 확인한 절차대로 응급처치를 진행합니다.</small></li>
+        <li><b>처치기록지 작성</b><small>처치 후에는 반드시 처치기록지를 작성합니다.</small></li>
+        <li><b>사용 대장 기입</b><small>사용 물품·수량, 처치자, 대상자 성명을 구급함 안 사용 대장에 기록합니다.</small></li>
+      </ol>
+    </div>
+    <div class="note danger"><span class="b">중요</span><span>판단이 어렵거나 증상이 심각·지속되면 처치를 지체하지 말고 <b>즉시 119에 신고</b>하세요.</span></div>
+  </section>
+
+  <!-- ============ 증상별 응급처치 ============ -->
+  <section id="firstaid" class="screen">
+    <button class="back" onclick="go('home')">← 메뉴로</button>
+    <div class="page-title"><p class="eyebrow">03 · First Aid</p><h1>증상별 응급처치</h1></div>
+
+    <div class="chips" id="symChips">
+      <button class="chip on" data-sym="nose">코피</button>
+      <button class="chip" data-sym="head">두통</button>
+      <button class="chip" data-sym="dizzy">어지럼증·현기증</button>
+      <button class="chip" data-sym="cut">손가락 베임</button>
+      <button class="chip" data-sym="arrest">심정지</button>
+    </div>
+
+    <!-- 코피 -->
+    <div class="symptom active" data-sym="nose">
+      <div class="panel">
+        <div class="sym-head">
+          <svg class="sym-fig" viewBox="0 0 72 72" fill="none"><circle cx="34" cy="29" r="16" fill="var(--red)" fill-opacity=".08" stroke="currentColor" stroke-width="2.4"/><circle cx="28" cy="26" r="1.8" fill="currentColor"/><circle cx="40" cy="26" r="1.8" fill="currentColor"/><path d="M44 31l-6 3M46 35l-6 1" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M34 40s-3 4-3 6a3 3 0 0 0 6 0c0-2-3-6-3-6Z" fill="var(--red)"/><path d="M14 51c6 4 15 4 21 0" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round"/><path d="M35 51l-5-2M35 51l-5 3" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round"/></svg>
+          <div><h2>코피</h2><span class="en">Nosebleed</span></div>
+        </div>
+        <ol class="steps">
+          <li><b>고개를 살짝 앞으로 숙이기</b><small>절대 뒤로 젖히지 마세요. 피가 목 뒤로 넘어가면 메스꺼움을 유발합니다.</small></li>
+          <li><b>콧볼을 압박</b><small>콧대 아래 말랑한 부분을 엄지와 검지로 10~15분간 계속 눌러줍니다.</small></li>
+          <li><b>입으로 호흡</b><small>압박하는 동안 입으로 숨을 쉬고, 중간에 손을 떼서 확인하지 않습니다.</small></li>
+          <li><b>냉찜질</b><small>콧등·이마에 차가운 것을 대면 지혈에 도움이 됩니다.</small></li>
+        </ol>
+      </div>
+      <div class="note danger"><span class="b">119</span><span>15~20분 이상 지속되거나 출혈량이 많고, 어지럽거나 창백해지면 즉시 119에 연락하세요.</span></div>
+    </div>
+
+    <!-- 두통 -->
+    <div class="symptom" data-sym="head">
+      <div class="panel">
+        <div class="sym-head">
+          <svg class="sym-fig" viewBox="0 0 72 72" fill="none"><circle cx="36" cy="39" r="15" fill="var(--red)" fill-opacity=".08" stroke="currentColor" stroke-width="2.4"/><circle cx="30" cy="37" r="1.8" fill="currentColor"/><circle cx="42" cy="37" r="1.8" fill="currentColor"/><path d="M31 46c3 2 7 2 10 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><g stroke="var(--red)" stroke-width="2.4" stroke-linecap="round"><path d="M18 25l4 4M14 31h5M21 19l2 5M54 25l-4 4M58 31h-5M51 19l-2 5"/></g></svg>
+          <div><h2>두통</h2><span class="en">Headache</span></div>
+        </div>
+        <ol class="steps">
+          <li><b>안정</b><small>조용하고 조명이 약한 곳에서 눈을 감고 휴식합니다.</small></li>
+          <li><b>수분 섭취</b><small>탈수가 원인인 경우가 많으므로 물을 마십니다.</small></li>
+          <li><b>찜질</b><small>이마나 목 뒤에 냉·온찜질을 하면 완화에 도움이 됩니다.</small></li>
+        </ol>
+      </div>
+      <div class="note danger"><span class="b">119</span><span>갑작스럽고 극심한 두통, 발열·구토·의식 저하·말이 어눌해짐이 동반되면 즉시 119에 연락하세요.</span></div>
+    </div>
+
+    <!-- 어지럼증 -->
+    <div class="symptom" data-sym="dizzy">
+      <div class="panel">
+        <div class="sym-head">
+          <svg class="sym-fig" viewBox="0 0 72 72" fill="none"><circle cx="36" cy="41" r="15" fill="var(--red)" fill-opacity=".08" stroke="currentColor" stroke-width="2.4"/><path d="M30 46c3 2 9 2 12 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M32 38a3 3 0 1 1-2.6-3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M46 38a3 3 0 1 1-2.6-3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M17 22c8 6 30 6 38 0" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="3 3" fill="none" opacity=".7"/><path d="M36 12l1.6 3.2 3.4.5-2.5 2.4.6 3.4-3.1-1.6-3.1 1.6.6-3.4-2.5-2.4 3.4-.5Z" fill="var(--red)"/></svg>
+          <div><h2>어지럼증 · 현기증</h2><span class="en">Dizziness</span></div>
+        </div>
+        <ol class="steps">
+          <li><b>즉시 앉거나 눕기</b><small>넘어져 다치지 않도록 가장 먼저 자세를 낮춥니다.</small></li>
+          <li><b>머리 낮추고 안정</b><small>누운 상태에서 다리를 살짝 올리면 도움이 됩니다.</small></li>
+          <li><b>수분 섭취</b><small>안정된 뒤 물을 마시고, 일어날 때는 천천히 움직입니다.</small></li>
+        </ol>
+      </div>
+      <div class="note danger"><span class="b">119</span><span>의식 저하, 한쪽 팔·다리 마비, 발음 이상, 심한 두통이 함께 나타나면 뇌졸중 의심 — 즉시 119에 연락하세요.</span></div>
+    </div>
+
+    <!-- 손가락 베임 -->
+    <div class="symptom" data-sym="cut">
+      <div class="panel">
+        <div class="sym-head">
+          <svg class="sym-fig" viewBox="0 0 72 72" fill="none"><rect x="27" y="12" width="18" height="46" rx="9" fill="var(--red)" fill-opacity=".08" stroke="currentColor" stroke-width="2.4"/><path d="M32 20h8" stroke="currentColor" stroke-width="1.6" opacity=".4"/><path d="M36 28v9" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round"/><g transform="rotate(22 36 34)"><rect x="19" y="28" width="34" height="12" rx="3" fill="#fff" fill-opacity=".1" stroke="currentColor" stroke-width="2.2"/><circle cx="36" cy="34" r="2.4" fill="currentColor" opacity=".5"/></g></svg>
+          <div><h2>종이에 손가락 베임</h2><span class="en">Paper Cut</span></div>
+        </div>
+        <ol class="steps">
+          <li><b>세척</b><small>흐르는 깨끗한 물로 상처 부위를 씻어 이물질을 제거합니다.</small></li>
+          <li><b>지혈</b><small>깨끗한 거즈로 상처를 눌러 피를 멈춥니다.</small></li>
+          <li><b>연고 도포</b><small>지혈이 되면 연고를 얇게 바릅니다.</small></li>
+          <li><b>보호</b><small>밴드나 거즈로 상처를 덮어 오염을 막습니다.</small></li>
+        </ol>
+      </div>
+      <div class="note warn"><span class="b">TIP</span><span>처치자는 장갑을 착용하세요. 상처가 깊거나 지혈이 안 되면 병원 진료가 필요합니다.</span></div>
+    </div>
+
+    <!-- 심정지 -->
+    <div class="symptom" data-sym="arrest">
+      <div class="panel" style="background:linear-gradient(180deg,rgba(255,42,58,.12),var(--bg-elev));border-color:var(--red-deep)">
+        <div class="sym-head">
+          <svg class="sym-fig" viewBox="0 0 72 72" fill="none"><path d="M36 58C18 46 10 36 10 25a10 10 0 0 1 19-5 10 10 0 0 1 19 5c0 11-8 21-12 33Z" fill="var(--red)" fill-opacity=".18" stroke="var(--red)" stroke-width="2.4" stroke-linejoin="round"/><path d="M17 34h9l4-8 6 16 4-8h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><h2>심정지</h2><span class="en">Cardiac Arrest</span></div>
+        </div>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px">반응과 정상 호흡이 없다면 <b style="color:var(--text)">심정지</b>입니다. 1초라도 빨리 심폐소생술과 자동심장충격기(AED)가 필요합니다.</p>
+        <div class="btnrow">
+          <a class="primary" onclick="go('cpr')">→ 심폐소생술 열기</a>
+          <a class="ghost" onclick="go('aed')">⚡ AED 위치</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CPR ============ -->
+  <section id="cpr" class="screen">
+    <button class="back" onclick="go('home')">← 메뉴로</button>
+    <div class="page-title"><p class="eyebrow">04 · Cardiopulmonary Resuscitation</p><h1>심폐소생술 (CPR)</h1></div>
+
+    <div class="metro">
+      <div class="bpm">가슴압박 속도 · 110 BPM</div>
+      <div class="pulse" id="pulse"><span class="ring"></span><span class="core"></span></div>
+      <div class="cnt">권장 속도는 분당 100~120회입니다. 아래 박자에 맞춰 압박하세요.</div>
+      <button id="metroBtn" onclick="toggleMetro()">▶ 박자 시작</button>
+    </div>
+
+    <div class="panel">
+      <h2>성인 기본 소생술 순서</h2>
+      <div class="sym-head" style="margin-bottom:8px">
+        <svg class="sym-fig" viewBox="0 0 72 72" fill="none"><path d="M12 32c0-6 8-10 24-10s24 4 24 10v10c0 6-8 11-24 11s-24-5-24-11Z" fill="var(--red)" fill-opacity=".07" stroke="currentColor" stroke-width="2.2"/><ellipse cx="36" cy="38" rx="10" ry="6.5" fill="var(--red)" fill-opacity=".2" stroke="currentColor" stroke-width="2.2"/><path d="M29 34c3-2 11-2 14 0" stroke="currentColor" stroke-width="1.5" opacity=".6"/><path d="M36 13v9M31 18l5 5 5-5" stroke="var(--red)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="color:var(--muted);font-size:13.5px">가슴 중앙을 <b style="color:var(--text)">약 5cm 깊이</b>로, <b style="color:var(--text)">분당 100~120회</b> 강하고 빠르게 누릅니다.</div>
+      </div>
+      <ol class="steps">
+        <li><b>반응 확인</b><small>양쪽 어깨를 두드리며 "괜찮으세요?"라고 크게 물어 반응을 확인합니다.</small></li>
+        <li><b>119 신고 · AED 요청</b><small>주변 사람을 지목해 "119 신고", 또 한 명에게 "자동심장충격기를 가져오라"고 명확히 요청합니다.</small></li>
+        <li><b>호흡 확인</b><small>10초 이내로 가슴·배의 움직임을 살핍니다. 호흡이 없거나 비정상적이면 심정지로 판단합니다.</small></li>
+        <li><b>가슴압박 30회</b><small>가슴 중앙(복장뼈 아래쪽 절반)에 깍지 낀 두 손을 대고 팔을 곧게 편 채, 약 5cm 깊이로 분당 100~120회 압박합니다.</small></li>
+        <li><b>인공호흡 2회</b><small>머리를 젖히고 턱을 들어 기도를 연 뒤 1초씩 2회. 어렵거나 꺼려지면 <b>가슴압박만 계속</b>해도 됩니다.</small></li>
+        <li><b>30 : 2 반복</b><small>119 구급대 도착 또는 AED 사용 준비 전까지 압박 30회·호흡 2회를 반복합니다.</small></li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <h2>AED(자동심장충격기) 사용</h2>
+      <div class="sym-head" style="margin-bottom:8px">
+        <svg class="sym-fig" viewBox="0 0 72 72" fill="none"><path d="M12 27c0-6 8-9 24-9s24 3 24 9v18c0 6-8 10-24 10s-24-4-24-10Z" fill="var(--red)" fill-opacity=".06" stroke="currentColor" stroke-width="2.2"/><rect x="39" y="24" width="13" height="13" rx="3" fill="var(--red)" fill-opacity=".22" stroke="var(--red)" stroke-width="2"/><rect x="23" y="37" width="13" height="13" rx="3" fill="var(--red)" fill-opacity=".22" stroke="var(--red)" stroke-width="2"/><path d="M47 27l-3 4h3l-3 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        <div style="color:var(--muted);font-size:13.5px">패드는 <b style="color:var(--text)">오른쪽 빗장뼈 아래</b>와 <b style="color:var(--text)">왼쪽 옆구리</b>에 붙입니다.</div>
+      </div>
+      <ol class="steps">
+        <li><b>전원 켜기</b><small>덮개를 열고 전원을 누른 뒤 음성 안내를 그대로 따릅니다.</small></li>
+        <li><b>패드 부착</b><small>한 장은 오른쪽 빗장뼈 아래, 다른 한 장은 왼쪽 젖꼭지 아래 옆구리에 붙입니다.</small></li>
+        <li><b>리듬 분석</b><small>"분석 중" 안내가 나오면 환자에게서 모두 손을 뗍니다.</small></li>
+        <li><b>제세동 시행</b><small>"쇼크 버튼을 누르라"는 안내가 나오면 모두 물러난 것을 확인하고 버튼을 누릅니다.</small></li>
+        <li><b>즉시 압박 재개</b><small>쇼크 후 바로 가슴압박을 다시 시작하고, 2분마다 분석을 반복합니다.</small></li>
+      </ol>
+    </div>
+    <div class="note danger"><span class="b">기억</span><span>주저하지 마세요. 아무것도 하지 않는 것보다 <b>가슴압박만이라도 하는 것</b>이 생존율을 크게 높입니다.</span></div>
+  </section>
+
+  <!-- ============ AED 위치 ============ -->
+  <section id="aed" class="screen">
+    <button class="back" onclick="go('home')">← 메뉴로</button>
+    <div class="page-title"><p class="eyebrow">05 · AED Locations</p><h1>자동심장충격기 위치</h1></div>
+    <div class="aed">
+      <div class="loc">
+        <svg class="pin" viewBox="0 0 48 48" fill="none"><path d="M24 44s14-11 14-22a14 14 0 1 0-28 0c0 11 14 22 14 22Z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M25 15l-6 9h5l-1 8 7-11h-5z" fill="currentColor"/></svg>
+        <div><b>행정동 1층</b><p>행정실 앞에 비치되어 있습니다.</p></div>
+      </div>
+      <div class="loc">
+        <svg class="pin" viewBox="0 0 48 48" fill="none"><path d="M24 44s14-11 14-22a14 14 0 1 0-28 0c0 11 14 22 14 22Z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M25 15l-6 9h5l-1 8 7-11h-5z" fill="currentColor"/></svg>
+        <div><b>체육관</b><p>체육부 사무실 앞에 비치되어 있습니다.</p></div>
+      </div>
+    </div>
+    <div class="note warn" style="margin-top:18px"><span class="b">TIP</span><span>AED를 가지러 갈 때도 다른 사람은 <b>가슴압박을 멈추지 않고</b> 계속해야 합니다.</span></div>
+  </section>
+
+  <!-- ============ 비상 연락망 ============ -->
+  <section id="contacts" class="screen">
+    <button class="back" onclick="go('home')">← 메뉴로</button>
+    <div class="page-title"><p class="eyebrow">06 · Emergency Contacts</p><h1>비상 연락망</h1></div>
+    <div class="contacts">
+      <div class="contact prime"><div class="info"><b>소방 · 구급</b><span>화재 · 응급환자 · 구조 신고</span></div><a href="tel:119">119</a></div>
+      <div class="contact"><div class="info"><b>한라병원 권역응급의료센터</b><span>제주시 도령로</span></div><a href="tel:0647405159">064-740-5159</a></div>
+      <div class="contact"><div class="info"><b>제주대학교병원 응급의료센터</b><span>제주시 아란13길</span></div><a href="tel:0647172182">064-717-2182</a></div>
+      <div class="contact"><div class="info"><b>제주에스중앙병원 응급의료센터</b><span>제주시 도령로</span></div><a href="tel:0647867777">064-786-7777</a></div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="foot-disc">이 시스템은 비전문가의 <b>응급처치를 돕기 위한 안내</b>이며 전문 의료행위를 대체하지 않습니다. 판단이 어렵거나 증상이 위중하면 지체 없이 119에 연락하세요.</p>
+    <div class="credit">
+      <img class="crest" alt="제주제일고등학교 교표">
+      <div class="txt">
+        <b>제주제일고등학교 제71기 프로젝트 봉사활동</b>
+        <div class="team">2-3 TEAM 119</div>
+        <div class="members">추세연 · 김동규 · 현지환 · 홍지운</div>
+      </div>
+    </div>
+    <p class="sys">JEIL-EMS · 야간자율학습실 응급의료 시스템</p>
+  </footer>
+
+</main>
+
+<script>
+  const CREST="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHdpZHRoPSIyNjIuNjYzNzMiIGhlaWdodD0iMzA2LjMwNTU3IiB2aWV3Qm94PSIwIDAgMjYyLjY2MzczIDMwNi4zMDU1NyI+PGcgc3R5bGU9InN0cm9rZS13aWR0aDouNjM0MDg2Ij48cGF0aCBkPSJNLjAwNiAxNDUuNjY4aDExOS43MTFjMi41NiAwIDUuMTgxLTEuNzUyIDUuMTgzLTQuNDc0LjAxOC0zMS4yNzguMDE5LTYyLjM3NSAwLTkzLjY1Mi0uMDAxLTMuMzg2LS4xNjUtNi41MDUtMS41OTctOS42ODYtNC4zOTYtOS43NjItMTcuNjg3LTE4Ljg5OS0yNy4xNDgtMjQuMTMyLTMuNzA5LTIuMDUxLTcuOTMzLTQuMDItMTIuMjk2LTUuOTQzQzc3Ljg1IDUuMTMzIDcxLjU3OSAyLjc0MiA2Ni4wMjguOTg3Yy0zLjU3NC0xLjEzLTQuMjI0LTEuNDY3LTcuOTc3LS4wNi01Ljc3MSAyLjE2Mi0xMS4yNTkgNC4yMTgtMTYuNzA1IDYuNjQ2LTQuNjE2IDIuMDU3LTkuNjU0IDQuNDA4LTE0LjM1OCA3LjA1M0MxOCAxOS42NzggOC4xMDcgMjYuNDY5IDIuODM0IDM1LjUzMyAxLjAyIDM4LjY0OS4wNTIgNDEuODI1LjA0NyA0NS45NDZjLS4wNDIgMzMuMy0uMDU1IDY2LjQyMS0uMDQxIDk5LjcyMloiIHN0eWxlPSJmaWxsOiMwMDZjOTc7ZmlsbC1vcGFjaXR5OjE7ZmlsbC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOi42MzQwODYiIHRyYW5zZm9ybT0ibWF0cml4KDIuMTAyNzYgMCAwIC0yLjEwMjc2IDAgMzA2LjMwNikiLz48cGF0aCBkPSJNMTE5Ljc3NiA4MS40MXEtLjAwMi0xNi45MzItLjAxMS0zMy44NjZjLS4wMDEtMi41NzktLjA2OC01LjE4NS0xLjE0Ni03LjU3OC0zLjg4Ni04LjYzLTE2Ljg0Mi0xNy4yNjItMjQuOTUtMjEuNzQ3LTMuODUtMi4xMy03Ljg2LTMuOTY1LTExLjg4Mi01LjczOC00Ljc3NC0yLjEwNC05LjYzNC00LjAzMS0xNC41NzctNS43MDItMS4wOC0uMzY2LTIuMTM1LS43NzItMy4yMDUtMS4xNjQtLjQ2MS0uMTY4LTEuMDIyLS4zOC0xLjUxMy0uNDMzLTEuMDc4LS4xMTctMy4zMS44MDYtNC4yOTggMS4xNzYtNC45NiAxLjg2Mi05LjkxNiAzLjc0OC0xNC43NTcgNS45MDYtNC43MjQgMi4xMDYtOS40MjEgNC4zMDMtMTMuOTMyIDYuODM5LTguMDk5IDQuNTUzLTE3LjQ3MiAxMC44My0yMi4yMzEgMTkuMDEyLTEuNDggMi41NDQtMi4wODcgNC44OTctMi4wOTEgNy44MzdxLS4wMyAyNC4zMjYtLjA0IDQ4LjY1aC4wMjFsLS4wMTggMjAuMDUzYzAgLjk4Ni4zODMgMS41ODEgMS41MDcgMS41ODNxOS42OS4wMjEgMTkuMzgyLjAxNHYyLjA0N0g2Ljg3MmMtMi4yMDggMC0zLjc1MS0xLjIyOC0zLjc1My0zLjUzNGwtLjAxMi0yMC4xNjJoLjA1MnEuMDEtMjQuMzI3LjA0LTQ4LjY1M2MuMDA1LTMuMzA4LjcwNy01Ljk5IDIuMzYtOC44MzEgNC45NTgtOC41MjQgMTQuNTM2LTE1LjAwMSAyMi45NzMtMTkuNzQ0IDQuNTYtMi41NjQgOS4zMjEtNC43OTMgMTQuMDk3LTYuOTIyIDQuODc4LTIuMTc0IDkuODctNC4wNzUgMTQuODY4LTUuOTUgNS42MTUtMi4xMDcgNC44MjItMS40NyAxMC4zNDcuMzk3IDQuOTkzIDEuNjg4IDkuOTM3IDMuNjQ5IDE0Ljc0MiA1Ljc2NiA0LjA2NiAxLjc5MyA4LjE1MSAzLjY2NiAxMi4wNDEgNS44MTggOC41NDcgNC43MjcgMjEuNjk5IDEzLjU2MSAyNS44IDIyLjY2OCAxLjIxMyAyLjY5NiAxLjMxNyA1LjQ4NCAxLjMyIDguMzkxcS4wMDkgMTYuOTM1LjAxIDMzLjg2OGgtLjAxNmwtLjAyMiA1LjY5NmMtLjAwOCAyLjE5LTEuMDc4IDMuMzk2LTMuNDI3IDMuMzk2bC0xOS4zMi0uMDAzLS4wMTQtMi4wMzIgMTkuMjUzLS4wNDNjMS4yNzgtLjAwMyAxLjU2NS0uMTUgMS41NjYtMS40ODJsLjAwNC01LjUzMmgtLjAwNXpNMjkuNjYxIDQ2LjY0OGg2NS42NTZ2LTIuMDc2SDI5LjY2MVptMCA0LjQ3NWg2NS42NTZ2LTIuMTA2SDI5LjY2MVptMCA0LjQ0NWg2NS42NTZ2LTIuMDc2SDI5LjY2MVptNDUuNzQtMTMuMTZ2LTEuOTNoLTUuNDk4bC0uMjkzLTIuMjI0Yy0uMDE2LS4yOC41NjktLjExLjcwMi0uMDQ0LjkzNi4yNTEgMS44OS4yMDYgMi43MzYtLjA5NSAxLjkyNC0uNjgyIDIuODgxLTIuMzkgMi44MTQtNC4zMjUtLjAyMi0uNjQ4LS4xMTUtMS4xNTQtLjMyMi0xLjYxMy0uNjk1LTEuNTQyLTIuNTgtMi42Ni00LjI2Ni0yLjY1My0yLjIwNC4wMDgtNC40MzUgMS41NS00LjM4MyAzLjg3NmwyLjE2NC0uMDNjLjI2Ny0uODM4LjM4LTEuOTU5IDIuMTUtMi4wMzcgMS41MzQtLjA2OCAyLjMxMiAxLjE5IDIuNDA3IDIuNTQ3LjA4NSAxLjIwOC0uNDggMi4zMjEtMS42OTEgMi42MzUtLjg4Ny4xMjItMS45MjcuMDA5LTIuNDU3LS43OWEyOCAyOCAwIDAgMC0yLjIyMy4wMTVsLjYxNSA2LjY2OHpNNTUuOTI1IDMyLjI2MmE0LjUzIDQuNTMgMCAwIDAtMy4yMTUtMi42NmMtMS40MTItLjMwOC0yLjk1Mi4wNTctNC4wNDggMS4yMTgtLjUyMi41NTMtLjg1NyAxLjI2OS0uOTI3IDIuMTdoMi4zNGMuMDQtMS4wNTkuNjQ2LTEuOTAyIDEuNzgzLTEuNzExLjc3OS4wMjMgMS4zMzIuNTYgMS42ODcgMS4xODEuNS44NzQuNjA4IDEuOTE2LjQwNCAxLjkzMy0uODI3LS4zNDctMS40MDItLjM3OC0yLjI4LS4zMzItMi4wOTguMTEtMy44MS44OTYtNC4wOCAzLjY1My0uMjM1IDIuMzg3IDEuMDk3IDQuMjMzIDMuNjExIDQuNjc4IDEuNzYuMzEgMy41NjgtLjM4NiA0LjUzMi0xLjk1NCAxLjI4NC0yLjA4NSAxLjA4Mi02LjA4Ni4xOTMtOC4xNzZtLTIuMDQyIDYuOTQ0Yy4yMS0uNTQyLjI5Ny0xLjE5My4zMDYtMS44ODFxLjAwNi0uNDQzLS4wMDYtLjg4NWMtLjExOC0uMjgxLTEuOTg5LS41OTItMi41NDEtLjQ5NC0uOTYuMTcxLTEuNjczLjc5OC0xLjc5MyAxLjkxNC0uMTIzIDEuMTQ4LjQzMiAyLjU2MiAxLjY0IDIuNzk1LjkxNy4xNzYgMS45NjctLjM0NiAyLjM5NC0xLjQ0OW0tMjEuMTUxIDMuMmgyLjEzNFYyOS43MTVoLTIuMjUxcS4wMDggNC4zNDItLjAxNSA4LjY4NmEuMS4xIDAgMCAxLS4wNDQuMDNjLS42OTMtLjI3Ny0xLjIwNC0uNDgtMS45NTMtLjQ5NGEzNCAzNCAwIDAgMC0uOTQzLS4wMDN2MS45NmE1LjggNS44IDAgMCAxIDEuOTMuMzY1cS45MjEuNDM3IDEuMDY4IDEuNDQ3LjA1OS4zNDkuMDc0LjcwMm02Mi4xMTkgMHYtMS45M2gtNS40OThsLS4yOTMtMi4yMjNjLS4wMTYtLjI4LjU2OS0uMTEuNzAyLS4wNDQuOTM2LjI1MSAxLjg5LjIwNiAyLjczNi0uMDk1IDEuOTI0LS42ODIgMi44ODEtMi4zOSAyLjgxNC00LjMyNC0uMDIyLS42NDktLjExNS0xLjE1NS0uMzIyLTEuNjE0LS42OTUtMS41NDItMi41OC0yLjY2LTQuMjY2LTIuNjUzLTIuMjA0LjAwOC00LjQzNSAxLjU1LTQuMzg0IDMuODc2bDIuMTY1LS4wM2MuMjY3LS44MzguMzgtMS45NTkgMi4xNS0yLjAzNyAxLjUzNC0uMDY4IDIuMzEyIDEuMTkgMi40MDcgMi41NDcuMDg1IDEuMjA4LS40OCAyLjMyMS0xLjY5MSAyLjYzNS0uODg3LjEyMi0xLjkyNy4wMDktMi40NTctLjc5cS0xLjExLS4wMzctMi4yMjMuMDE1bC42MTUgNi42Njh6TTMuMTA2IDE0Mi4zNjloMjIuOTI4di0yLjA3NkgzLjEwNlptOTUuODY3IDBxOS42MTEuMDA3IDE5LjIyMi0uMDEzYzEuOTc1LS4wMDQgMy42MDEtMS4yODYgMy42MDYtMy4zMThxLjAyNS0xMi4xNjIgMC0yNC4zMjRjLS4wMDQtMS45NzctMS4zMjYtMy42NS0zLjM4MS0zLjY1NHEtOS43MzgtLjAyLTE5LjQ3Ni0uMDEzdjIuMDc3cTkuNTA1LS4wMDcgMTkuMDExLjAxMmMxLjUwNy4wMDMgMS43NjcuMzcgMS43NyAxLjg0cS4wMjUgMTEuODQ2LS4wMDEgMjMuNjljLS4wMDIgMS4xOTEtLjQzIDEuNjEtMS41OSAxLjYxM3EtOS41OTYuMDIxLTE5LjE5LjAxNHptLTk1Ljg2Ny01LjIwNnExMS40NS4wMDcgMjIuOS0uMDE0LjA0Mi0xLjAyOC4wMjktMi4wNjJIMy4xMDVabTk1Ljg2NyAwaDE3LjYzNXYtMjAuOTFIOTguOTQ0djIuMDc2aDE1LjU4OHYxNi43NThIOTguOTQ0cS0uMDE1IDEuMDQxLjAzIDIuMDc2bS05MC42NjEtMjQuMDRoMTcuNzIydi0yLjA3NmwtMTUuNzgtLjAzLjAyMy0xNC44NjhoLjAwMWwuMDAxLTEuNTM5di0uMDA2cS4wMS0yNC4zMjMuMDQtNDguNjQ0Yy4wMDMtMi4wMTMuMzgtMy41MTcgMS4zOTUtNS4yNkMxNS45NDcgMzMuNDIgMjQuODE4IDI3LjYzIDMyLjAyMiAyMy41OGM0LjM3My0yLjQ2IDguOTI2LTQuNTg0IDEzLjUwNi02LjYyNSA0Ljc0Ny0yLjExNiA5LjYwNy0zLjk2MyAxNC40NzEtNS43ODguNDk2LS4xODYgMS40NDMtLjYgMi4wOTgtLjc4NGwuMTQyLjA1NWMxLjEwNy40MDUgMi4yMDkuODI4IDMuMzI2IDEuMjA1IDQuOCAxLjYyMyA5LjUxNSAzLjQ5NCAxNC4xNSA1LjUzNyAzLjg4MyAxLjcxMiA3Ljc1MiAzLjQ3OCAxMS40NjggNS41MzMgNi45NTIgMy44NDUgMTkuNDQgMTIuMDAyIDIyLjc1MyAxOS4zNi43MDkgMS41NzUuNjkgMy43Ny42OTIgNS40NzNxLjAxIDE1Ljc0NS4wMTEgMzEuNDkyaC0uMDA4bC0uMDA2IDQuMTM2LTE1LjY4MS4wM3YyLjA0NmgxNy42NjRsLjAwMS0zLjg0aC4wMTRxLS4wMDUtMTYuOTMzLS4wMTItMzMuODY1Yy0uMDAxLTIuMDUtLjAxMS00LjM4NC0uODY3LTYuMjg1LTMuNTM4LTcuODU3LTE2LjIxLTE2LjE5NC0yMy42MDItMjAuMjgyLTMuNzY3LTIuMDg0LTcuNjktMy44NzctMTEuNjI3LTUuNjEyLTQuNjktMi4wNjctOS40Ni0zLjk1OS0xNC4zMTUtNS42LTEuMTAyLS4zNzMtMi4xODctLjc5LTMuMjgtMS4xOS0uMTktLjA3LS40NzQtLjE4Ny0uNjk2LS4yNDItLjc1NC4wOTctMi4yNTQuNzI2LTIuOTIxLjk3Ni00LjkwMSAxLjg0LTkuOCAzLjcwMi0xNC41ODIgNS44MzQtNC42MzUgMi4wNjYtOS4yNDQgNC4yMTktMTMuNjcgNi43MDctNy41NDggNC4yNDQtMTYuNjE0IDEwLjIyMy0yMS4wNSAxNy44NS0xLjE5NiAyLjA1NC0xLjY2IDMuODgyLTEuNjY0IDYuMjU0cS0uMDMgMjUuMDk2LS4wNDEgNTAuMTkyaC4wMDJ6IiBzdHlsZT0iZmlsbDojZmU5YzJiO2ZpbGwtb3BhY2l0eToxO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDouNjM0MDg2IiB0cmFuc2Zvcm09Im1hdHJpeCgyLjEwMjc2IDAgMCAtMi4xMDI3NiAwIDMwNi4zMDYpIi8+PHBhdGggZD0iTTI5LjY5IDE0Mi4zNjhoNjUuNjI3di03LjI4MkgyOS42NjFxLS4wMTUgMy42NDUuMDMgNy4yODJtMzAuMDk0LTE3Ljk1NnEyLjcwNi4wMDcgNS40MS0uMDE1Ljc4Ny0uMTcyIDEuMDk3LS45MjIuMDIzLTIuNTcyLjAxNS01LjE0N2gyOS4wMTF2LTcuMjgySDc4LjAwNHYtMjAuNTNsMTIuMjk5LS4wMTJjMy4wOTgtLjAwMyA1LTEuNzkgNS4wMDEtNC45M2wuMDEzLTI1LjU2MWgtNy45ODRsLS4wMTQgMjAuMjY2Yy0uMDAyIDIuMzctMS4zNTQgMi44ODMtMy4zMjkgMi44ODNINDEuMTQyYy0yLjQ1IDAtMy41NDEtLjYyNC0zLjU0My0zLjQxOGwtLjAxMi0xOS44NDhIMjkuNjZxLS4wMDcgMTIuODkyLjAxMyAyNS43ODZjLjAwNCAzLjAzMiAxLjcxIDQuODIgNC44MzQgNC44MjNsMTIuNDA4LjAxdjIwLjUzMUgyOS42NnY3LjI4MmgyOS4wMTJxLS4wMDcgMi41NTkuMDE0IDUuMTE4LjMuNzc3IDEuMDk3Ljk2NW0tNC4zMjgtMTMuMzY2IDE0LjAxNC0uMDE0Yy40OCAwIC43Ny0uMTY4Ljc3LS42OXYtMi4wNTZjMC0uNjA0LS4xNy0uODIzLS43OTMtLjgyM0g1NS40NDNjLS41NDMgMC0uODQxLjEzLS44NC43MXYyLjE3MmMuMDAxLjU3NS4zNzkuNzAyLjg1My43MDFtMC04LjU1MiAxNC4wMTQtLjAxNWMuNDggMCAuNzctLjE2OC43Ny0uNjl2LTIuMDU2YzAtLjYwNC0uMTctLjgyMi0uNzkzLS44MjJsLTE0LjAwNC0uMDAyYy0uNTQzIDAtLjg0MS4xMy0uODQuNzF2Mi4xNzRjLjAwMS41NzQuMzc5LjcwMS44NTMuN20wLTguMzg3IDE0LjAxNC0uMDE0Yy40OCAwIC43Ny0uMTY4Ljc3LS42OXYtMi4wNTZjMC0uNjA0LS4xNy0uODIzLS43OTMtLjgyM2wtMTQuMDA0LS4wMDFjLS41NDMgMC0uODQxLjEzLS44NC43MXYyLjE3M2MuMDAxLjU3NS4zNzkuNzAyLjg1My43MDFtLTYuMzQyLTE1Ljk5MSAyNi42ODQtLjAxNGMxLjUxMiAwIDIuMTkzLS40OTIgMi4xOTMtMi4wNWwuMDAxLTEyLjQzM2MwLTIuMTAzLS44MTMtMi42LTIuNjI0LTIuNmwtMjYuMTU5LjAwMmMtMS44MzMgMC0yLjI3Ni42MjUtMi4yODIgMi40MDdxLS4wMjMgNi4yMTYgMCAxMi40MzNjLjAwOCAxLjgwNC41OSAyLjI1NiAyLjE4NyAyLjI1NW03LjE3My01Ljc5IDEyLjM4Ni0uMDEzYzEuMjc0LS4wMDIgMS41ODktLjE0IDEuNTc4LTEuNDcybC0uMDE5LTIuMzkyYy0uMDA4LTEuMTMxLS4yNzktMS4zOC0xLjQxNi0xLjM3N2wtMTIuNjI1LjAzYy0xLjM4LjAwNC0xLjU1LjI3Ni0xLjU1IDEuNjM0bC4wMDEgMi4wNTZjLjAwMiAxLjQzMy40OSAxLjUzNSAxLjY0NSAxLjUzNCIgc3R5bGU9ImZpbGw6I2ZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6ZXZlbm9kZDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjYzNDA4NiIgdHJhbnNmb3JtPSJtYXRyaXgoMi4xMDI3NiAwIDAgLTIuMTAyNzYgMCAzMDYuMzA2KSIvPjwvZz48L3N2Zz4=";
+  document.querySelectorAll('img.crest').forEach(i=>i.src=CREST);
+
+  /* ECG */
+  (function(){
+    const beat='M0,23 L18,23 L24,17 L30,23 L52,23 L58,23 L63,6 L69,40 L74,23 L96,23 L104,17 L112,23 L120,23';
+    let p='';for(let i=0;i<12;i++){p+=`<path transform="translate(${i*120},0)" d="${beat}"/>`;}
+    document.getElementById('trace').innerHTML=`<svg width="1440" height="46" viewBox="0 0 1440 46">${p}</svg>`;
+  })();
+
+  /* date + clock */
+  const DOW=['일','월','화','수','목','금','토'];
+  function tickClock(){const d=new Date(),z=n=>String(n).padStart(2,'0');
+    document.getElementById('date').textContent=`${d.getFullYear()}.${z(d.getMonth()+1)}.${z(d.getDate())} (${DOW[d.getDay()]})`;
+    document.getElementById('clock').textContent=`${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`;}
+  tickClock();setInterval(tickClock,1000);
+
+  /* router */
+  function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo({top:0,behavior:'instant'});history.replaceState(null,'','#'+id);}
+  window.go=go;
+  if(location.hash){const id=location.hash.slice(1);if(document.getElementById(id))go(id);}
+
+  /* symptom tabs */
+  document.getElementById('symChips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;document.querySelectorAll('#symChips .chip').forEach(c=>c.classList.remove('on'));b.classList.add('on');const k=b.dataset.sym;document.querySelectorAll('#firstaid .symptom').forEach(s=>s.classList.toggle('active',s.dataset.sym===k));});
+
+  /* metronome 110 BPM */
+  let ctx,timer,on=false;const BPM=110,pulse=document.getElementById('pulse'),btn=document.getElementById('metroBtn');
+  function beep(){const t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=1500;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.35,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+.05);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+.06);pulse.classList.remove('hit');void pulse.offsetWidth;pulse.classList.add('hit');}
+  function toggleMetro(){if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();on=!on;if(on){beep();timer=setInterval(beep,60000/BPM);btn.textContent='■ 정지';btn.classList.add('stop');}else{clearInterval(timer);btn.textContent='▶ 박자 시작';btn.classList.remove('stop');}}
+  window.toggleMetro=toggleMetro;
+</script>
+</body>
+</html>
